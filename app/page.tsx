@@ -12,10 +12,15 @@ export default function Home() {
   const [place, setPlace] = useState("");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   async function handleSubmit() {
+    setMsg(null);
+    setError(false);
+
     if (!from || !to || !date || !startTime || !duration || !place) {
-      setMsg("请把必填项填完！");
+      setMsg("Please fill in all required fields.");
+      setError(true);
       return;
     }
 
@@ -32,13 +37,14 @@ export default function Home() {
 
     if (error) {
       console.error(error);
-      setMsg("❌ 发送失败，请重试");
+      setMsg("Something went wrong. Please try again.");
+      setError(true);
       return;
     }
 
-    setMsg("✅ 已成功发送约见请求！");
-    
-    // 清空部分字段
+    setMsg("Request sent successfully!");
+    setError(false);
+
     setDate("");
     setStartTime("");
     setDuration("");
@@ -47,44 +53,93 @@ export default function Home() {
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 600, margin: "0 auto" }}>
-      <h1>QuickMeet · 发起约见</h1>
+    <main className="main-shell">
+      <div className="card">
+        <div className="card-title">QuickMeet · Send a request</div>
+        <div className="card-subtitle">
+          Pick a time, place, and send a lightweight meet-up request.
+        </div>
 
-      <label>你的名字</label>
-      <input value={from} onChange={(e) => setFrom(e.target.value)} />
+        <div className="form-grid">
+          <div>
+            <div className="field-label">Your name</div>
+            <input
+              placeholder="Alex"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </div>
 
-      <label>对方名字</label>
-      <input value={to} onChange={(e) => setTo(e.target.value)} />
+          <div>
+            <div className="field-label">Their name</div>
+            <input
+              placeholder="Jamie"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </div>
 
-      <label>日期</label>
-      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <div className="field-row">
+            <div style={{ flex: 1 }}>
+              <div className="field-label">Date</div>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="field-label">Start time</div>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div style={{ flexBasis: 120 }}>
+              <div className="field-label">Duration (min)</div>
+              <input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="60"
+              />
+            </div>
+          </div>
 
-      <label>开始时间</label>
-      <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          <div>
+            <div className="field-label">Place</div>
+            <input
+              placeholder="Coffee shop, campus, online..."
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+            />
+          </div>
 
-      <label>时长（分钟）</label>
-      <input
-        type="number"
-        value={duration}
-        onChange={(e) => setDuration(e.target.value)}
-        placeholder="例如 60"
-      />
+          <div>
+            <div className="field-label">Note (optional)</div>
+            <textarea
+              placeholder="Any context or preference you’d like to add."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+        </div>
 
-      <label>地点</label>
-      <input value={place} onChange={(e) => setPlace(e.target.value)} />
+        <div className="btn-row">
+          <button type="button" className="btn-primary" onClick={handleSubmit}>
+            <span>Send request</span>
+            <span>↗</span>
+          </button>
+          <span className="badge">
+            Their inbox URL: <code>/inbox?name=TheirName</code>
+          </span>
+        </div>
 
-      <label>备注（可选）</label>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} />
-
-      <button type="button" onClick={handleSubmit}>
-        发出申请
-      </button>
-
-      {msg && (
-        <p style={{ marginTop: 16, color: "#4f46e5" }}>
-          {msg}
-        </p>
-      )}
+        {msg && (
+          <div className={`feedback ${error ? "error" : ""}`}>{msg}</div>
+        )}
+      </div>
     </main>
   );
 }

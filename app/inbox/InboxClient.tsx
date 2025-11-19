@@ -36,11 +36,11 @@ export function InboxClient() {
 
     if (error) {
       console.error(error);
-      setMsg("❌ 加载失败");
+      setMsg("Failed to load requests.");
     } else {
       setRequests(data as Request[]);
       if (!data || data.length === 0) {
-        setMsg("目前没有任何约见请求。");
+        setMsg("No requests yet.");
       }
     }
 
@@ -60,7 +60,7 @@ export function InboxClient() {
 
     if (error) {
       console.error(error);
-      setMsg("❌ 更新状态失败");
+      setMsg("Failed to update status.");
       return;
     }
 
@@ -71,83 +71,93 @@ export function InboxClient() {
 
   if (!name) {
     return (
-      <main style={{ padding: 24, maxWidth: 700, margin: "0 auto" }}>
-        <h1>收件箱</h1>
-        <p>请在地址栏后面加上你的名字，例如：</p>
-        <pre style={{ background: "#f4f4f5", padding: 12, borderRadius: 8 }}>
-          /inbox?name=Yuki
-        </pre>
+      <main className="main-shell">
+        <div className="card">
+          <div className="card-title">Inbox</div>
+          <div className="card-subtitle">
+            Add your name to the URL to see your requests.
+          </div>
+          <div className="small-hint">
+            Example: <code>/inbox?name=Jamie</code>
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 700, margin: "0 auto" }}>
-      <h1>{name} 的约见收件箱</h1>
-
-      <button
-        type="button"
-        onClick={load}
-        style={{ marginBottom: 16, padding: "6px 12px", borderRadius: 999 }}
-      >
-        刷新
-      </button>
-
-      {loading && <p>加载中...</p>}
-      {msg && <p style={{ marginBottom: 12 }}>{msg}</p>}
-
-      {requests.map((r) => (
-        <div
-          key={r.id}
-          style={{
-            border: "1px solid #e4e4e7",
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 10,
-          }}
-        >
-          <div style={{ marginBottom: 4 }}>
-            <strong>{r.from_name}</strong> → {r.to_name} ·{" "}
-            {r.status === "pending"
-              ? "待回复"
-              : r.status === "accepted"
-              ? "已同意"
-              : "已拒绝"}
-          </div>
-          <div>
-            📅 {r.date} {r.start_time} · {r.duration_minutes} 分钟
-          </div>
-          <div>📍 {r.place}</div>
-          {r.note && <div>📝 {r.note}</div>}
-
-          {r.status === "pending" && (
-            <div style={{ marginTop: 8 }}>
-              <button
-                type="button"
-                onClick={() => updateStatus(r.id, "accepted")}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 999,
-                  marginRight: 8,
-                }}
-              >
-                同意
-              </button>
-              <button
-                type="button"
-                onClick={() => updateStatus(r.id, "rejected")}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 999,
-                  background: "#fee2e2",
-                }}
-              >
-                拒绝
-              </button>
-            </div>
-          )}
+    <main className="main-shell">
+      <div className="card">
+        <div className="card-title">{name} · Inbox</div>
+        <div className="card-subtitle">
+          All QuickMeet requests sent to you.
         </div>
-      ))}
+
+        <div className="btn-row">
+          <button type="button" className="btn-ghost" onClick={load}>
+            Refresh
+          </button>
+          <div className="small-hint">
+            Share this link with people you meet:{" "}
+            <code>?name={encodeURIComponent(name)}</code>
+          </div>
+        </div>
+
+        {loading && <div className="feedback">Loading…</div>}
+        {msg && <div className="feedback">{msg}</div>}
+
+        <div className="list">
+          {requests.map((r) => (
+            <div key={r.id} className="request-item">
+              <div className="request-main">
+                <div>
+                  <strong>{r.from_name}</strong> → {r.to_name}
+                </div>
+                <div
+                  className={
+                    "tag " +
+                    (r.status === "pending"
+                      ? "pending"
+                      : r.status === "accepted"
+                      ? "accepted"
+                      : "rejected")
+                  }
+                >
+                  {r.status === "pending"
+                    ? "Pending"
+                    : r.status === "accepted"
+                    ? "Accepted"
+                    : "Rejected"}
+                </div>
+              </div>
+              <div className="request-meta">
+                📅 {r.date} · {r.start_time} · {r.duration_minutes} min
+              </div>
+              <div className="request-meta">📍 {r.place}</div>
+              {r.note && <div className="request-note">📝 {r.note}</div>}
+
+              {r.status === "pending" && (
+                <div className="item-actions">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => updateStatus(r.id, "accepted")}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    onClick={() => updateStatus(r.id, "rejected")}
+                  >
+                    Decline
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </main>
   );
 }

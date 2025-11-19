@@ -1,26 +1,245 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #020617;
+  --bg-soft: #020617;
+  --card: #020617;
+  --border: #1f2937;
+  --accent: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.1);
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --danger: #f97373;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", Arial, sans-serif;
+  background: radial-gradient(circle at top, #020617 0, #000 50%, #020617 100%);
+  color: var(--text-main);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Layout */
+
+.main-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+  padding: 24px 24px 20px;
+  backdrop-filter: blur(16px);
+}
+
+/* Typography */
+
+.card-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* Form */
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+}
+
+textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+/* Buttons */
+
+.btn-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-primary {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary:hover {
+  opacity: 0.95;
+  transform: translateY(-0.5px);
+}
+
+.badge {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Message */
+
+.feedback {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.feedback.error {
+  color: var(--danger);
+}
+
+/* Inbox card items */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.request-item {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.request-main {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.request-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.request-note {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.tag.pending {
+  border-color: #facc15;
+  color: #facc15;
+}
+
+.tag.accepted {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.tag.rejected {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+.item-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-ghost {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.btn-danger {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid rgba(248, 113, 113, 0.9);
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+  cursor: pointer;
+}
+
+.small-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
 }
