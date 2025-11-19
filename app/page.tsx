@@ -1,65 +1,90 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [duration, setDuration] = useState("");
+  const [place, setPlace] = useState("");
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function handleSubmit() {
+    if (!from || !to || !date || !startTime || !duration || !place) {
+      setMsg("请把必填项填完！");
+      return;
+    }
+
+    const { error } = await supabase.from("requests").insert({
+      from_name: from,
+      to_name: to,
+      date,
+      start_time: startTime,
+      duration_minutes: Number(duration),
+      place,
+      note,
+      status: "pending",
+    });
+
+    if (error) {
+      console.error(error);
+      setMsg("❌ 发送失败，请重试");
+      return;
+    }
+
+    setMsg("✅ 已成功发送约见请求！");
+    
+    // 清空部分字段
+    setDate("");
+    setStartTime("");
+    setDuration("");
+    setPlace("");
+    setNote("");
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main style={{ padding: 24, maxWidth: 600, margin: "0 auto" }}>
+      <h1>QuickMeet · 发起约见</h1>
+
+      <label>你的名字</label>
+      <input value={from} onChange={(e) => setFrom(e.target.value)} />
+
+      <label>对方名字</label>
+      <input value={to} onChange={(e) => setTo(e.target.value)} />
+
+      <label>日期</label>
+      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+
+      <label>开始时间</label>
+      <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+
+      <label>时长（分钟）</label>
+      <input
+        type="number"
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
+        placeholder="例如 60"
+      />
+
+      <label>地点</label>
+      <input value={place} onChange={(e) => setPlace(e.target.value)} />
+
+      <label>备注（可选）</label>
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} />
+
+      <button type="button" onClick={handleSubmit}>
+        发出申请
+      </button>
+
+      {msg && (
+        <p style={{ marginTop: 16, color: "#4f46e5" }}>
+          {msg}
+        </p>
+      )}
+    </main>
   );
 }
