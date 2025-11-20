@@ -78,15 +78,28 @@ export function SentClient() {
           All QuickMeet requests you have sent out.
         </div>
 
-        <div className="btn-row">
-          <button type="button" className="btn-ghost" onClick={load}>
-            Refresh
-          </button>
-          <div className="small-hint">
-            Share this URL only with yourself. Others can’t change your
-            outgoing requests.
-          </div>
-        </div>
+       <div className="btn-row">
+  <button type="button" className="btn-ghost" onClick={load}>
+    Refresh
+  </button>
+
+  {name && (
+    <button
+      type="button"
+      className="btn-ghost"
+      onClick={() => {
+        window.location.href = `/inbox?name=${encodeURIComponent(name)}`;
+      }}
+    >
+      View requests sent to you
+    </button>
+  )}
+
+  <div className="small-hint">
+    Share this URL only with yourself. Others can’t change your outgoing requests.
+  </div>
+</div>
+
 
         {loading && <div className="feedback">Loading…</div>}
         {msg && <div className="feedback">{msg}</div>}

@@ -94,14 +94,27 @@ export function InboxClient() {
         </div>
 
         <div className="btn-row">
-          <button type="button" className="btn-ghost" onClick={load}>
-            Refresh
-          </button>
-          <div className="small-hint">
-            Share this link with people you meet:{" "}
-            <code>?name={encodeURIComponent(name)}</code>
-          </div>
-        </div>
+  <button type="button" className="btn-ghost" onClick={load}>
+    Refresh
+  </button>
+
+  {name && (
+    <button
+      type="button"
+      className="btn-ghost"
+      onClick={() => {
+        window.location.href = `/sent?name=${encodeURIComponent(name)}`;
+      }}
+    >
+      View requests you sent
+    </button>
+  )}
+
+  <div className="small-hint">
+    Share this link with people who want to send <strong>{name}</strong> a request.
+  </div>
+</div>
+
 
         {loading && <div className="feedback">Loading…</div>}
         {msg && <div className="feedback">{msg}</div>}
