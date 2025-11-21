@@ -47,13 +47,12 @@ export async function POST(request: Request) {
     ].filter(Boolean) as string[];
 
     await resend.emails.send({
-      // 这里的 from 必须是 Resend 允许的地址
-      // 初期可以用官方的 onboarding 地址，之后你可以自己接入域名
-      from: "QuickMeet <onboarding@resend.dev>",
-      to: [toEmail],
-      subject,
-      text: textLines.join("\n"),
-    });
+  from: "QuickMeet · Lettermeet <goodday@lettermeet.cafe>",
+  to: [toEmail],
+  subject,
+  text: textLines.join("\n"),
+});
+
 
     return NextResponse.json({ ok: true });
   } catch (err) {

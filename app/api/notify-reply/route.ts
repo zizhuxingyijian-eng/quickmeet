@@ -11,16 +11,16 @@ export async function POST(request: Request) {
     console.log("[notify-reply] incoming body:", body);
 
     const {
-      toEmail,     // A 的邮箱（应该是这个）
+      toEmail,
       toName,
-      fromEmail,   // B 的邮箱
+      fromEmail,
       fromName,
       date,
       startTime,
       durationMinutes,
       place,
       note,
-      status,      // accepted / rejected
+      status,
     } = body;
 
     if (!toEmail) {
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     console.log("[notify-reply] sending via Resend to:", toEmail);
 
     const result = await resend.emails.send({
-      from: "QuickMeet <onboarding@resend.dev>",
+      from: "QuickMeet · Lettermeet <goodday@lettermeet.cafe>",  // ←⭐你要改这里
       to: [toEmail],
       subject,
       text: textLines.join("\n"),
