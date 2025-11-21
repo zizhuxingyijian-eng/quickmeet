@@ -92,6 +92,31 @@ export function InboxClient() {
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status } : r))
     );
+    // ⭐ 发邮件给 A
+try {
+  const req = requests.find((r) => r.id === id);
+  if (req) {
+    await fetch("/api/notify-reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        toEmail: req.from_email,   // A 的 email
+        toName: req.from_name,
+        fromEmail: req.to_email,   // B 的 email
+        fromName: req.to_name,
+        date: req.date,
+        startTime: req.start_time,
+        durationMinutes: req.duration_minutes,
+        place: req.place,
+        note: req.note,
+        status: status,
+      }),
+    });
+  }
+} catch (err) {
+  console.error("notify reply failed", err);
+}
+
   }
 
   // 还在查当前登录状态
