@@ -40,6 +40,8 @@ export default function Home() {
     setCurrentUser(u);
     if (u?.email) {
       setFrom(u.email); // 登录后自动填「Your email」
+    } else {
+      setFrom("");
     }
   }
 
@@ -63,6 +65,8 @@ export default function Home() {
   useEffect(() => {
     if (currentUser?.id) {
       loadContacts(currentUser.id);
+    } else {
+      setContacts([]);
     }
   }, [currentUser]);
 
@@ -76,7 +80,7 @@ export default function Home() {
         contact_email: to.trim(),
         contact_name: null,
         last_used_at: new Date().toISOString(),
-        // times_used 会在后续 update 里自动 +1，这里先留默认值
+        // times_used 可以在触发 upsert 时由数据库默认 +1（如果你设了 trigger）
       },
       {
         onConflict: "owner_user_id,contact_email",
@@ -89,48 +93,62 @@ export default function Home() {
     }
   }
 
-    async function handleSubmit() {
-  setMsg(null);
-  setError(false);
+  async function handleSubmit() {
+    setMsg(null);
+    setError(false);
 
-  const fromEmail = from.trim();
-  const toEmail = to.trim();
+    // ⭐ 必须先登录
+    if (!currentUser || !currentUser.id || !currentUser.email) {
+      setError(true);
+      setMsg("Please sign in with Google before sending a request.");
+      return;
+    }
 
-  if (!fromEmail || !toEmail || !date || !startTime || !duration || !place) {
-    setMsg("Please fill in all required fields.");
-    setError(true);
-    return;
-  }
+    const fromEmail = currentUser.email; // A = 当前登录账号
+    const toEmail = to.trim(); // B = 你输入的对方邮箱
 
-  // 1. 先写入数据库
-  const { error } = await supabase.from("requests").insert({
-    from_name: fromEmail,
-    to_name: toEmail,
-    from_email: fromEmail,
-    to_email: toEmail,
-    date,
-    start_time: startTime,
-    duration_minutes: Number(duration),
-    place,
-    note,
-    status: "pending",
-  });
+    if (!toEmail || !date || !startTime || !duration || !place) {
+      setError(true);
+      setMsg("Please fill in all required fields.");
+      return;
+    }
 
-  if (error) {
-    console.error(error);
-    setMsg("Something went wrong. Please try again.");
-    setError(true);
-    return;
-  }
+    // 1. 先写入数据库（⭐ 把 from_user_id 绑上）
+    const { error: insertError } = await supabase.from("requests").insert({
+      from_user_id: currentUser.id, // ⭐ 关键：Sent 用这个筛
+      // 未来如果对方也用 Google 登陆，可以再加 to_user_id
 
-  // 2. 再尝试发邮件（失败也不要影响前端 success 提示）
-  try {
-    await fetch("/api/notify-new-request", {
+      from_name: fromEmail,
+      to_name: toEmail,
+      from_email: fromEmail,
+      to_email: toEmail,
+      date,
+      start_time: startTime,
+      duration_minutes: Number(duration),
+      place,
+      note,
+      status: "pending",
+    });
+
+    if (insertError) {
+      console.error(insertError);
+      setError(true);
+      setMsg("Something went wrong. Please try again.");
+      return;
+    }
+
+    // 2. 保存联系人（不用阻塞 UI）
+    saveContact().catch((err) =>
+      console.error("saveContact failed:", err)
+    );
+
+    // 3. 尝试给 B 发邮件通知（⭐ 不 await，避免卡 10 秒）
+    fetch("/api/notify-new-request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         toEmail,
-        toName: toEmail, // 现在我们用邮箱当 name，之后你可以扩展成真正的名字
+        toName: toEmail,
         fromEmail,
         fromName: fromEmail,
         date,
@@ -139,22 +157,21 @@ export default function Home() {
         place,
         note,
       }),
+    }).catch((err) => {
+      console.error("failed to call notify-new-request", err);
     });
-  } catch (err) {
-    console.error("failed to call notify API", err);
-    // 不弹 error，最多你自己在 console 看就行
+
+    setMsg("Request sent successfully!");
+    setError(false);
+
+    // 清空表单（fromEmail 保持为当前登录账号）
+    setTo("");
+    setDate("");
+    setStartTime("");
+    setDuration("");
+    setPlace("");
+    setNote("");
   }
-
-  setMsg("Request sent successfully!");
-  setError(false);
-
-  setDate("");
-  setStartTime("");
-  setDuration("");
-  setPlace("");
-  setNote("");
-}
-
 
   return (
     <>
@@ -174,63 +191,61 @@ export default function Home() {
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 placeholder="your-email@gmail.com"
+                disabled={!!currentUser?.email} // 登录后就锁死，避免和账号不一致
               />
             </div>
 
             <div>
-  <div className="field-label">Their email</div>
+              <div className="field-label">Their email</div>
 
-  <div className="email-autocomplete">
-    <input
-      value={to}
-      onChange={(e) => {
-        setTo(e.target.value);
-        setEmailDropdownOpen(true);
-      }}
-      onFocus={() => setEmailDropdownOpen(true)}
-      onBlur={() => {
-        // 给点击选项一点点时间，不然一 blur 下拉框就消失了
-        setTimeout(() => setEmailDropdownOpen(false), 150);
-      }}
-      placeholder="friend@gmail.com"
-    />
+              <div className="email-autocomplete">
+                <input
+                  value={to}
+                  onChange={(e) => {
+                    setTo(e.target.value);
+                    setEmailDropdownOpen(true);
+                  }}
+                  onFocus={() => setEmailDropdownOpen(true)}
+                  onBlur={() => {
+                    setTimeout(() => setEmailDropdownOpen(false), 150);
+                  }}
+                  placeholder="friend@gmail.com"
+                />
 
-    {currentUser &&
-      emailDropdownOpen &&
-      contacts.length > 0 && (
-        <div className="email-dropdown">
-          {contacts
-            .filter((c) =>
-              c.contact_email
-                .toLowerCase()
-                .includes(to.trim().toLowerCase())
-            )
-            .map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className="email-option"
-                onMouseDown={(e) => {
-                  // 用 onMouseDown 避免 input blur 抢先触发
-                  e.preventDefault();
-                  setTo(c.contact_email);
-                  setEmailDropdownOpen(false);
-                }}
-              >
-                {c.contact_email}
-              </button>
-            ))}
-        </div>
-      )}
-  </div>
+                {currentUser &&
+                  emailDropdownOpen &&
+                  contacts.length > 0 && (
+                    <div className="email-dropdown">
+                      {contacts
+                        .filter((c) =>
+                          c.contact_email
+                            .toLowerCase()
+                            .includes(to.trim().toLowerCase())
+                        )
+                        .map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className="email-option"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setTo(c.contact_email);
+                              setEmailDropdownOpen(false);
+                            }}
+                          >
+                            {c.contact_email}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+              </div>
 
-  {currentUser && contacts.length === 0 && (
-    <div className="small-hint" style={{ marginTop: 4 }}>
-      No contacts yet – send a request first.
-    </div>
-  )}
-</div>
-
+              {currentUser && !contactsLoading && contacts.length === 0 && (
+                <div className="small-hint" style={{ marginTop: 4 }}>
+                  No contacts yet – send a request first.
+                </div>
+              )}
+            </div>
 
             <div>
               <div className="field-label">Date</div>

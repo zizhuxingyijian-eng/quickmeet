@@ -22,10 +22,13 @@ export function AuthBar({
       if (!error && data.user) {
         const u: User = {
           id: data.user.id,
-          email: data.user.email ?? null, // ⭐ 防止 undefined 触发 TS 报错
+          email: data.user.email ?? null,
         };
         setUser(u);
         onUserChange?.(u);
+      } else {
+        setUser(null);
+        onUserChange?.(null);
       }
       setLoading(false);
     });
@@ -37,7 +40,7 @@ export function AuthBar({
       const u: User | null = session?.user
         ? {
             id: session.user.id,
-            email: session.user.email ?? null, // ⭐ 同样处理 undefined
+            email: session.user.email ?? null,
           }
         : null;
 
@@ -50,12 +53,11 @@ export function AuthBar({
     };
   }, [onUserChange]);
 
-  // ⭐ 修好：没有重复函数，没有嵌套
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.href, // ⭐ 登录成功后回到当前页面
+        redirectTo: window.location.href, // 回到当前页
       },
     });
   };
