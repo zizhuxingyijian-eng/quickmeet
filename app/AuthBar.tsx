@@ -17,10 +17,13 @@ export function AuthBar({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 进页面先拿一次当前用户
+    // 初次载入：检查当前用户
     supabase.auth.getUser().then(({ data, error }) => {
       if (!error && data.user) {
-        const u = { id: data.user.id, email: data.user.email };
+        const u: User = {
+          id: data.user.id,
+          email: data.user.email ?? null, // ⭐ 防止 undefined 触发 TS 报错
+        };
         setUser(u);
         onUserChange?.(u);
       }
@@ -31,9 +34,13 @@ export function AuthBar({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user
-        ? { id: session.user.id, email: session.user.email }
+      const u: User | null = session?.user
+        ? {
+            id: session.user.id,
+            email: session.user.email ?? null, // ⭐ 同样处理 undefined
+          }
         : null;
+
       setUser(u);
       onUserChange?.(u);
     });
@@ -43,17 +50,14 @@ export function AuthBar({
     };
   }, [onUserChange]);
 
+  // ⭐ 修好：没有重复函数，没有嵌套
   const handleLogin = async () => {
-    const handleLogin = async () => {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      // 回到当前完整 URL，而不是只回到根域名
-      redirectTo: window.location.href,
-    },
-  });
-};
-
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.href, // ⭐ 登录成功后回到当前页面
+      },
+    });
   };
 
   const handleLogout = async () => {
