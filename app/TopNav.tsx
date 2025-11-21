@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { AuthBar } from "./AuthBar";
 
+type AuthedUser = {
+  id: string;
+  email: string | null;
+};
+
 type Props = {
-  onUserChange?: (u: { email: string | null } | null) => void;
+  onUserChange?: (u: AuthedUser | null) => void;
 };
 
 export function TopNav({ onUserChange }: Props) {
@@ -16,7 +21,7 @@ export function TopNav({ onUserChange }: Props) {
           QuickMeet
         </Link>
 
-        {/* 中：导航链接 */}
+        {/* 中：导航 */}
         <nav className="nav-links">
           <Link href="/inbox" className="nav-link">
             Inbox
