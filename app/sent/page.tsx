@@ -1,18 +1,21 @@
+// app/sent/page.tsx
 import { Suspense } from "react";
 import { SentClient } from "./SentClient";
+import { TopNav } from "../TopNav";
 
 export default function SentPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="main-shell">
-          <div className="card">
-            <div className="card-title">Loading sent requests…</div>
-          </div>
-        </main>
-      }
-    >
-      <SentClient />
-    </Suspense>
+    <>
+      <TopNav />
+      <Suspense
+        fallback={
+          <main style={{ padding: 24, maxWidth: 700, margin: "0 auto" }}>
+            <h1>Loading sent requests…</h1>
+          </main>
+        }
+      >
+        <SentClient />
+      </Suspense>
+    </>
   );
 }

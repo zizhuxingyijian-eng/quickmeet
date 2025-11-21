@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type Request = {
   id: string;
   from_name: string;
   to_name: string;
+  from_email: string | null;
+  to_email: string | null;
   date: string;
   start_time: string;
   duration_minutes: number;
@@ -17,28 +18,48 @@ type Request = {
 };
 
 export function InboxClient() {
-  const searchParams = useSearchParams();
-  const name = searchParams.get("name") || "";
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  async function load() {
-    if (!name) return;
+  // 进页面先拿当前登录用户的邮箱
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("getUser error:", error);
+        setMsg("Failed to get current user.");
+        return;
+      }
+
+      const email = data.user?.email ?? null;
+      setUserEmail(email);
+
+      if (email) {
+        await load(email);
+      } else {
+        setMsg("Please sign in with Google to view your inbox.");
+      }
+    })();
+  }, []);
+
+  async function load(email: string) {
     setLoading(true);
     setMsg(null);
 
     const { data, error } = await supabase
       .from("requests")
       .select("*")
-      .eq("to_name", name)
+      .eq("to_email", email)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error(error);
-      setMsg("Failed to load requests.");
+      console.error("load inbox error:", error);
+      setMsg(error.message || "Failed to load requests.");
     } else {
-      setRequests(data as Request[]);
+      setRequests((data || []) as Request[]);
       if (!data || data.length === 0) {
         setMsg("No requests yet.");
       }
@@ -47,38 +68,46 @@ export function InboxClient() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
-
   async function updateStatus(id: string, status: "accepted" | "rejected") {
+    setMsg(null);
+
     const { error } = await supabase
       .from("requests")
       .update({ status })
       .eq("id", id);
 
     if (error) {
-      console.error(error);
-      setMsg("Failed to update status.");
+      console.error("updateStatus error:", error);
+      setMsg(error.message || "Failed to update status.");
       return;
     }
 
+    // 本地状态同步
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status } : r))
     );
   }
 
-  if (!name) {
+  // 还在查当前登录用户
+  if (userEmail === null) {
+    return (
+      <main className="main-shell">
+        <div className="card">
+          <div className="card-title">Inbox</div>
+          <div className="card-subtitle">Loading your account…</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 没登录
+  if (!userEmail) {
     return (
       <main className="main-shell">
         <div className="card">
           <div className="card-title">Inbox</div>
           <div className="card-subtitle">
-            Add your name to the URL to see your requests.
-          </div>
-          <div className="small-hint">
-            Example: <code>/inbox?name=Jamie</code>
+            Please sign in with Google on the home page to see your inbox.
           </div>
         </div>
       </main>
@@ -88,33 +117,30 @@ export function InboxClient() {
   return (
     <main className="main-shell">
       <div className="card">
-        <div className="card-title">{name} · Inbox</div>
+        <div className="card-title">Inbox · {userEmail}</div>
         <div className="card-subtitle">
-          All QuickMeet requests sent to you.
+          All meet-up requests sent to your account.
         </div>
 
         <div className="btn-row">
-  <button type="button" className="btn-ghost" onClick={load}>
-    Refresh
-  </button>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => load(userEmail)}
+          >
+            Refresh
+          </button>
 
-  {name && (
-    <button
-      type="button"
-      className="btn-ghost"
-      onClick={() => {
-        window.location.href = `/sent?name=${encodeURIComponent(name)}`;
-      }}
-    >
-      View requests you sent
-    </button>
-  )}
-
-  <div className="small-hint">
-    Share this link with people who want to send <strong>{name}</strong> a request.
-  </div>
-</div>
-
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              window.location.href = "/sent";
+            }}
+          >
+            View requests you sent
+          </button>
+        </div>
 
         {loading && <div className="feedback">Loading…</div>}
         {msg && <div className="feedback">{msg}</div>}
@@ -124,7 +150,8 @@ export function InboxClient() {
             <div key={r.id} className="request-item">
               <div className="request-main">
                 <div>
-                  <strong>{r.from_name}</strong> → {r.to_name}
+                  <strong>{r.from_email || r.from_name}</strong> →{" "}
+                  {r.to_email || r.to_name || "You"}
                 </div>
                 <div
                   className={
@@ -137,18 +164,20 @@ export function InboxClient() {
                   }
                 >
                   {r.status === "pending"
-                    ? "Pending"
+                    ? "pending"
                     : r.status === "accepted"
-                    ? "Accepted"
-                    : "Rejected"}
+                    ? "accepted"
+                    : "rejected"}
                 </div>
               </div>
+
               <div className="request-meta">
                 📅 {r.date} · {r.start_time} · {r.duration_minutes} min
               </div>
               <div className="request-meta">📍 {r.place}</div>
               {r.note && <div className="request-note">📝 {r.note}</div>}
 
+              {/* ★★ 这里就是 Accept / Decline 按钮 ★★ */}
               {r.status === "pending" && (
                 <div className="item-actions">
                   <button

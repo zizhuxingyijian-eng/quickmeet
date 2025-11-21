@@ -40,10 +40,13 @@ a {
 .main-shell {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  flex-direction: column;      /* ⭐ 关键：改成竖着堆 */
+  align-items: center;         /* 水平居中 */
+  justify-content: flex-start; /* 顶部开始往下排 */
+  padding: 32px 16px;
+  gap: 24px;                   /* 顶部条和卡片之间留一点空隙 */
 }
+
 
 .card {
   width: 100%;
@@ -242,4 +245,99 @@ textarea {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 6px;
+}
+.top-bar {
+  width: 100%;
+  max-width: 720px;          /* 跟卡片一个宽度，自己看着调 */
+  display: flex;
+  justify-content: flex-end; /* 按钮靠右 */
+  margin-bottom: 8px;
+}
+/* ---------- Top navigation ---------- */
+/* ---------- Top navigation ---------- */
+
+.top-nav {
+  padding: 16px 32px;
+}
+
+.top-nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* 左侧 Logo */
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* 中间的 Inbox / Sent 链接区域 */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* 右侧登录信息 */
+.nav-auth {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* AuthBar 里的内容横向排列 */
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.email-autocomplete {
+  position: relative;
+}
+
+.email-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #050608;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.email-option {
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+.email-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }

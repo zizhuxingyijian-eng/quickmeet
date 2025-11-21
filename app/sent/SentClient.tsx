@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { TopNav } from "../TopNav";
+
+
+type User = {
+  id: string;
+  email: string | null;
+};
 
 type Request = {
   id: string;
@@ -16,24 +22,38 @@ type Request = {
   place: string;
   note: string | null;
   status: "pending" | "accepted" | "rejected";
+  from_user_id: string | null;
+  to_user_id: string | null;
 };
 
 export function SentClient() {
-  const searchParams = useSearchParams();
-  const name = searchParams.get("name") || "";
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  // 先查当前登录用户
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!error && data.user) {
+        setUser({ id: data.user.id, email: data.user.email });
+      } else {
+        setUser(null);
+      }
+      setAuthChecking(false);
+    });
+  }, []);
+
   async function load() {
-    if (!name) return;
+    if (!user) return;
     setLoading(true);
     setMsg(null);
 
     const { data, error } = await supabase
       .from("requests")
       .select("*")
-      .eq("from_name", name)
+      .eq("from_user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -49,57 +69,62 @@ export function SentClient() {
     setLoading(false);
   }
 
+  // user 变化时加载发件记录
   useEffect(() => {
-    load();
+    if (user) {
+      load();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+  }, [user]);
 
-  if (!name) {
+  // 还在查 session
+  if (authChecking) {
+    return (
+      <main className="main-shell">
+        <div className="card">
+          <div className="card-title">Sent requests</div>
+          <div className="card-subtitle">Checking your session…</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 没登录
+  if (!user) {
     return (
       <main className="main-shell">
         <div className="card">
           <div className="card-title">Sent requests</div>
           <div className="card-subtitle">
-            Add your name to the URL to see what you’ve sent.
-          </div>
-          <div className="small-hint">
-            Example: <code>/sent?name=Alex</code>
+            Please sign in with Google on the home page to see your sent
+            requests.
           </div>
         </div>
       </main>
     );
   }
 
+  // 已登录，正常显示发件记录
   return (
     <main className="main-shell">
       <div className="card">
-        <div className="card-title">{name} · Sent requests</div>
+        <div className="card-title">
+          Sent requests {user.email ? `· ${user.email}` : ""}
+        </div>
         <div className="card-subtitle">
           All QuickMeet requests you have sent out.
         </div>
 
-       <div className="btn-row">
-  <button type="button" className="btn-ghost" onClick={load}>
-    Refresh
-  </button>
+        <div className="btn-row">
+          <button type="button" className="btn-ghost" onClick={load}>
+            Refresh
+          </button>
 
-  {name && (
-    <button
-      type="button"
-      className="btn-ghost"
-      onClick={() => {
-        window.location.href = `/inbox?name=${encodeURIComponent(name)}`;
-      }}
-    >
-      View requests sent to you
-    </button>
-  )}
-
-  <div className="small-hint">
-    Share this URL only with yourself. Others can’t change your outgoing requests.
-  </div>
-</div>
-
+          <div className="small-hint">
+            Only you can see this page. It shows all requests sent from your
+            account.
+          </div>
+        </div>
 
         {loading && <div className="feedback">Loading…</div>}
         {msg && <div className="feedback">{msg}</div>}
