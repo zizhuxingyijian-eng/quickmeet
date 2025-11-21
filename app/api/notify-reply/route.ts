@@ -8,8 +8,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    console.log("[notify-reply] incoming body:", body);
+
     const {
-      toEmail,     // A 的邮箱
+      toEmail,     // A 的邮箱（应该是这个）
       toName,
       fromEmail,   // B 的邮箱
       fromName,
@@ -22,8 +24,9 @@ export async function POST(request: Request) {
     } = body;
 
     if (!toEmail) {
+      console.error("[notify-reply] missing toEmail", body);
       return NextResponse.json(
-        { error: "Missing toEmail" },
+        { error: "Missing toEmail in payload" },
         { status: 400 }
       );
     }
@@ -36,11 +39,13 @@ export async function POST(request: Request) {
     const textLines = [
       `Hi ${toName || toEmail},`,
       ``,
-      `${fromName || fromEmail} has **${status}** your QuickMeet request.`,
+      `${fromName || fromEmail || "They"} has ${status} your QuickMeet request.`,
       ``,
-      `📅 Date: ${date}`,
-      `⏰ Time: ${startTime} (${durationMinutes} min)`,
-      `📍 Place: ${place}`,
+      date ? `📅 Date: ${date}` : undefined,
+      startTime && durationMinutes
+        ? `⏰ Time: ${startTime} (${durationMinutes} min)`
+        : undefined,
+      place ? `📍 Place: ${place}` : undefined,
       note ? "" : undefined,
       note ? `📝 Note: ${note}` : undefined,
       ``,
@@ -50,16 +55,20 @@ export async function POST(request: Request) {
       `— QuickMeet`,
     ].filter(Boolean) as string[];
 
-    await resend.emails.send({
+    console.log("[notify-reply] sending via Resend to:", toEmail);
+
+    const result = await resend.emails.send({
       from: "QuickMeet <onboarding@resend.dev>",
       to: [toEmail],
       subject,
       text: textLines.join("\n"),
     });
 
+    console.log("[notify-reply] Resend result:", result);
+
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("notify-reply error", err);
+    console.error("[notify-reply] error:", err);
     return NextResponse.json(
       { error: "Failed to send email" },
       { status: 500 }

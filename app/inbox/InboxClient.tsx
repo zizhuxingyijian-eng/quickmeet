@@ -75,49 +75,65 @@ export function InboxClient() {
   }
 
   async function updateStatus(id: string, status: "accepted" | "rejected") {
-    setMsg(null);
+  setMsg(null);
 
-    const { error } = await supabase
-      .from("requests")
-      .update({ status })
-      .eq("id", id);
+  // 1. 更新数据库里的状态
+  const { error } = await supabase
+    .from("requests")
+    .update({ status })
+    .eq("id", id);
 
-    if (error) {
-      console.error("updateStatus error:", error);
-      setMsg(error.message || "Failed to update status.");
-      return;
-    }
+  if (error) {
+    console.error("updateStatus error:", error);
+    setMsg(error.message || "Failed to update status.");
+    return;
+  }
 
-    // 本地状态同步
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status } : r))
-    );
-    // ⭐ 发邮件给 A
-try {
-  const req = requests.find((r) => r.id === id);
-  if (req) {
-    await fetch("/api/notify-reply", {
+  // 2. 本地状态同步
+  setRequests((prev) =>
+    prev.map((r) => (r.id === id ? { ...r, status } : r))
+  );
+
+  // 3. 在当前状态里找到这条 request（A → B 那条）
+  const current = requests.find((r) => r.id === id);
+  if (!current) {
+    console.warn("No request found in state for id:", id, requests);
+    return;
+  }
+
+  console.log("[updateStatus] replying for request:", current);
+
+  // 4. 发邮件给 A（from_email 是 A 的邮箱）
+  try {
+    const res = await fetch("/api/notify-reply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        toEmail: req.from_email,   // A 的 email
-        toName: req.from_name,
-        fromEmail: req.to_email,   // B 的 email
-        fromName: req.to_name,
-        date: req.date,
-        startTime: req.start_time,
-        durationMinutes: req.duration_minutes,
-        place: req.place,
-        note: req.note,
-        status: status,
+        toEmail: current.from_email, // ⭐ A 的邮箱（一定要有）
+        toName: current.from_name,
+        fromEmail: current.to_email, // B 的邮箱
+        fromName: current.to_name,
+        date: current.date,
+        startTime: current.start_time,
+        durationMinutes: current.duration_minutes,
+        place: current.place,
+        note: current.note,
+        status,
       }),
     });
+
+    console.log("[updateStatus] notify-reply status:", res.status);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error("[updateStatus] notify-reply failed:", data);
+    }
+  } catch (err) {
+    console.error("[updateStatus] notify reply failed:", err);
   }
-} catch (err) {
-  console.error("notify reply failed", err);
 }
 
-  }
+
+  
 
   // 还在查当前登录状态
   if (authChecking) {
