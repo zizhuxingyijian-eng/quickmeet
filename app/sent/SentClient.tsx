@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { TopNav } from "../TopNav";
-
 
 type User = {
   id: string;
@@ -37,7 +35,10 @@ export function SentClient() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
       if (!error && data.user) {
-        setUser({ id: data.user.id, email: data.user.email });
+        setUser({
+          id: data.user.id,
+          email: data.user.email ?? null, // ⭐ 关键：避免 string | undefined
+        });
       } else {
         setUser(null);
       }
@@ -69,15 +70,13 @@ export function SentClient() {
     setLoading(false);
   }
 
-  // user 变化时加载发件记录
   useEffect(() => {
     if (user) {
       load();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // 还在查 session
+  // 还在查登录状态
   if (authChecking) {
     return (
       <main className="main-shell">
@@ -108,22 +107,9 @@ export function SentClient() {
   return (
     <main className="main-shell">
       <div className="card">
-        <div className="card-title">
-          Sent requests {user.email ? `· ${user.email}` : ""}
-        </div>
+        <div className="card-title">Sent requests</div>
         <div className="card-subtitle">
-          All QuickMeet requests you have sent out.
-        </div>
-
-        <div className="btn-row">
-          <button type="button" className="btn-ghost" onClick={load}>
-            Refresh
-          </button>
-
-          <div className="small-hint">
-            Only you can see this page. It shows all requests sent from your
-            account.
-          </div>
+          These are the requests you’ve sent with QuickMeet.
         </div>
 
         {loading && <div className="feedback">Loading…</div>}
@@ -134,23 +120,17 @@ export function SentClient() {
             <div key={r.id} className="request-item">
               <div className="request-main">
                 <div>
-                  <strong>You</strong> → {r.to_name}
+                  You →{" "}
+                  <strong>
+                    {r.to_email || r.to_name || "Unknown recipient"}
+                  </strong>
                 </div>
-                <div
-                  className={
-                    "tag " +
-                    (r.status === "pending"
-                      ? "pending"
-                      : r.status === "accepted"
-                      ? "accepted"
-                      : "rejected")
-                  }
-                >
+                <div className="tag">
                   {r.status === "pending"
-                    ? "Pending"
+                    ? "pending"
                     : r.status === "accepted"
-                    ? "Accepted"
-                    : "Rejected"}
+                    ? "accepted"
+                    : "rejected"}
                 </div>
               </div>
               <div className="request-meta">
