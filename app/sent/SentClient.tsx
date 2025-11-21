@@ -37,7 +37,7 @@ export function SentClient() {
       if (!error && data.user) {
         setUser({
           id: data.user.id,
-          email: data.user.email ?? null, // ⭐ 关键：避免 string | undefined
+          email: data.user.email ?? null,
         });
       } else {
         setUser(null);
@@ -88,15 +88,14 @@ export function SentClient() {
     );
   }
 
-  // 没登录
+  // 没登录：必须先用 Google 登录
   if (!user) {
     return (
       <main className="main-shell">
         <div className="card">
           <div className="card-title">Sent requests</div>
           <div className="card-subtitle">
-            Please sign in with Google on the home page to see your sent
-            requests.
+            Please sign in with Google to view your sent requests.
           </div>
         </div>
       </main>

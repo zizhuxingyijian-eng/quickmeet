@@ -18,6 +18,7 @@ type Request = {
 };
 
 export function InboxClient() {
+  const [authChecking, setAuthChecking] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,17 +32,22 @@ export function InboxClient() {
       if (error) {
         console.error("getUser error:", error);
         setMsg("Failed to get current user.");
+        setAuthChecking(false);
         return;
       }
 
       const email = data.user?.email ?? null;
-      setUserEmail(email);
 
       if (email) {
+        setUserEmail(email);
         await load(email);
       } else {
+        // 没有登录 / 没有邮箱
+        setUserEmail(null);
         setMsg("Please sign in with Google to view your inbox.");
       }
+
+      setAuthChecking(false);
     })();
   }, []);
 
@@ -88,32 +94,33 @@ export function InboxClient() {
     );
   }
 
-  // 还在查当前登录用户
-  if (userEmail === null) {
+  // 还在查当前登录状态
+  if (authChecking) {
     return (
       <main className="main-shell">
         <div className="card">
           <div className="card-title">Inbox</div>
-          <div className="card-subtitle">Loading your account…</div>
+          <div className="card-subtitle">Checking your session…</div>
         </div>
       </main>
     );
   }
 
-  // 没登录
+  // 没登录：必须先用 Google 登录
   if (!userEmail) {
     return (
       <main className="main-shell">
         <div className="card">
           <div className="card-title">Inbox</div>
           <div className="card-subtitle">
-            Please sign in with Google on the home page to see your inbox.
+            Please sign in with Google to view your inbox.
           </div>
         </div>
       </main>
     );
   }
 
+  // 已登录，正常显示 inbox
   return (
     <main className="main-shell">
       <div className="card">
@@ -177,7 +184,6 @@ export function InboxClient() {
               <div className="request-meta">📍 {r.place}</div>
               {r.note && <div className="request-note">📝 {r.note}</div>}
 
-              {/* ★★ 这里就是 Accept / Decline 按钮 ★★ */}
               {r.status === "pending" && (
                 <div className="item-actions">
                   <button
