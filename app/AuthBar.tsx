@@ -17,26 +17,44 @@ export function AuthBar({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 初次载入：检查当前用户
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (!error && data.user) {
-        const u: User = {
-          id: data.user.id,
-          email: data.user.email ?? null,
-        };
-        setUser(u);
-        onUserChange?.(u);
-      } else {
-        setUser(null);
-        onUserChange?.(null);
+    let ignore = false;
+
+    // ⭐ 用 async/await + try/catch/finally，保证无论成功失败都能 setLoading(false)
+    (async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (ignore) return;
+
+        if (!error && data.user) {
+          const u: User = {
+            id: data.user.id,
+            email: data.user.email ?? null,
+          };
+          setUser(u);
+          onUserChange?.(u);
+        } else {
+          setUser(null);
+          onUserChange?.(null);
+        }
+      } catch (e) {
+        if (!ignore) {
+          console.error("supabase.auth.getUser failed:", e);
+          setUser(null);
+          onUserChange?.(null);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
+    })();
 
     // 监听登录状态变化
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (ignore) return;
+
       const u: User | null = session?.user
         ? {
             id: session.user.id,
@@ -49,6 +67,7 @@ export function AuthBar({
     });
 
     return () => {
+      ignore = true;
       subscription.unsubscribe();
     };
   }, [onUserChange]);
