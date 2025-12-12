@@ -27,12 +27,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const subject = `New QuickMeet request from ${fromName || fromEmail}`;
+    const subject = `New LetterMeet request from ${fromName || fromEmail}`;
 
     const textLines = [
       `Hi ${toName || "there"},`,
       "",
-      `${fromName || fromEmail} just sent you a QuickMeet request.`,
+      `${fromName || fromEmail} just sent you a LetterMeet request.`,
       "",
       `Date: ${date}`,
       `Time: ${startTime} (${durationMinutes} min)`,
@@ -40,14 +40,14 @@ export async function POST(request: Request) {
       note ? "" : undefined,
       note ? `Message: ${note}` : undefined,
       "",
-      `You can view and respond on QuickMeet:`,
+      `You can view and respond on LetterMeet:`,
       `- Inbox: https://quickmeet-two.vercel.app/inbox`,
       "",
-      `— QuickMeet`,
+      `— LetterMeet`,
     ].filter(Boolean) as string[];
 
     await resend.emails.send({
-  from: "QuickMeet · Lettermeet <goodday@lettermeet.cafe>",
+  from: "Lettermeet <Goodday@lettermeet.cafe>",
   to: [toEmail],
   subject,
   text: textLines.join("\n"),

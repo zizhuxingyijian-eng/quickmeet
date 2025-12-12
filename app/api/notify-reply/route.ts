@@ -33,13 +33,13 @@ export async function POST(request: Request) {
 
     const subject =
       status === "accepted"
-        ? `Your QuickMeet request was accepted`
-        : `Your QuickMeet request was declined`;
+        ? `Your LetterMeet request was accepted`
+        : `Your LetterMeet request was declined`;
 
     const textLines = [
       `Hi ${toName || toEmail},`,
       ``,
-      `${fromName || fromEmail || "They"} has ${status} your QuickMeet request.`,
+      `${fromName || fromEmail || "They"} has ${status} your LetterMeet request.`,
       ``,
       date ? `📅 Date: ${date}` : undefined,
       startTime && durationMinutes
@@ -52,13 +52,13 @@ export async function POST(request: Request) {
       `You can check the status in your Sent page:`,
       `- https://quickmeet-two.vercel.app/sent`,
       ``,
-      `— QuickMeet`,
+      `— LetterMeet`,
     ].filter(Boolean) as string[];
 
     console.log("[notify-reply] sending via Resend to:", toEmail);
 
     const result = await resend.emails.send({
-      from: "QuickMeet · Lettermeet <goodday@lettermeet.cafe>",  // ←⭐你要改这里
+      from: "Lettermeet <Goodday@lettermeet.cafe>",  // ←⭐你要改这里
       to: [toEmail],
       subject,
       text: textLines.join("\n"),

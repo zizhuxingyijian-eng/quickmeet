@@ -76,13 +76,23 @@ export function SentClient() {
     }
   }, [user]);
 
+  function formatTime(value: string) {
+    const parts = value.split(":");
+    return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : value;
+  }
+
   // 还在查登录状态
   if (authChecking) {
     return (
       <main className="main-shell">
         <div className="card">
-          <div className="card-title">Sent requests</div>
-          <div className="card-subtitle">Checking your session…</div>
+          <div className="card-header">
+            <div className="seal">送</div>
+            <div>
+              <div className="card-title">Sent requests</div>
+              <div className="card-subtitle">Checking your session…</div>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -93,9 +103,14 @@ export function SentClient() {
     return (
       <main className="main-shell">
         <div className="card">
-          <div className="card-title">Sent requests</div>
-          <div className="card-subtitle">
-            Please sign in with Google to view your sent requests.
+          <div className="card-header">
+            <div className="seal">送</div>
+            <div>
+              <div className="card-title">Sent requests</div>
+              <div className="card-subtitle">
+                Please sign in with Google to view your sent requests.
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -106,13 +121,20 @@ export function SentClient() {
   return (
     <main className="main-shell">
       <div className="card">
-        <div className="card-title">Sent requests</div>
-        <div className="card-subtitle">
-          These are the requests you’ve sent with QuickMeet.
+        <div className="card-header">
+          <div className="seal">送</div>
+          <div>
+            <div className="card-title">Sent requests</div>
+            <div className="card-subtitle">
+              These are the requests you’ve sent with LetterMeet.
+            </div>
+          </div>
         </div>
 
-        {loading && <div className="feedback">Loading…</div>}
-        {msg && <div className="feedback">{msg}</div>}
+        <div className="card-section">
+          {loading && <div className="feedback">Loading…</div>}
+          {msg && <div className="feedback">{msg}</div>}
+        </div>
 
         <div className="list">
           {requests.map((r) => (
@@ -133,7 +155,7 @@ export function SentClient() {
                 </div>
               </div>
               <div className="request-meta">
-                📅 {r.date} · {r.start_time} · {r.duration_minutes} min
+                📅 {r.date} · {formatTime(r.start_time)} · {r.duration_minutes} min
               </div>
               <div className="request-meta">📍 {r.place}</div>
               {r.note && <div className="request-note">📝 {r.note}</div>}

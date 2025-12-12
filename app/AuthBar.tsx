@@ -73,10 +73,16 @@ export function AuthBar({
   }, [onUserChange]);
 
   const handleLogin = async () => {
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+      window.location.origin;
+
+    const redirectUrl = `${siteUrl}${window.location.pathname}`;
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.href, // 回到当前页
+        redirectTo: redirectUrl,
       },
     });
   };

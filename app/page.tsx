@@ -34,6 +34,7 @@ export default function Home() {
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsLoaded, setContactsLoaded] = useState(false);
 
   // AuthBar 传上来的当前用户
   function handleUserChange(u: AuthedUser | null) {
@@ -58,17 +59,21 @@ export default function Home() {
     if (!error && data) {
       setContacts(data as Contact[]);
     }
+
     setContactsLoading(false);
+    setContactsLoaded(true);
   }
 
   // 只要 currentUser 变了，就拉一次联系人
   useEffect(() => {
     if (currentUser?.id) {
+      setContactsLoaded(false);
       loadContacts(currentUser.id);
     } else {
       setContacts([]);
+      setContactsLoaded(false);
     }
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // 保存 / 更新联系人
   async function saveContact() {
@@ -179,12 +184,17 @@ export default function Home() {
 
       <main className="main-shell">
         <div className="card">
-          <div className="card-title">QuickMeet · Send a request</div>
-          <div className="card-subtitle">
-            Pick a time, place, and send a lightweight meet-up request.
+          <div className="card-header">
+            <div className="seal">LM</div>
+            <div>
+              <div className="card-title">LetterMeet · Send a request</div>
+              <div className="card-subtitle">
+                Pick a time, place, and send a lightweight meet-up request.
+              </div>
+            </div>
           </div>
 
-          <div className="form-grid">
+          <div className="form-grid card-section">
             <div>
               <div className="field-label">Your email</div>
               <input
@@ -240,7 +250,7 @@ export default function Home() {
                   )}
               </div>
 
-              {currentUser && !contactsLoading && contacts.length === 0 && (
+              {currentUser && contactsLoaded && contacts.length === 0 && (
                 <div className="small-hint" style={{ marginTop: 4 }}>
                   No contacts yet – send a request first.
                 </div>
@@ -294,11 +304,13 @@ export default function Home() {
             </div>
           </div>
 
-          {msg && <div className={error ? "error-msg" : "ok-msg"}>{msg}</div>}
+          <div className="card-section">
+            {msg && <div className={error ? "error-msg" : "ok-msg"}>{msg}</div>}
 
-          <button className="btn-main" onClick={handleSubmit}>
-            Send request
-          </button>
+            <button className="btn-main" onClick={handleSubmit}>
+              Send request
+            </button>
+          </div>
         </div>
       </main>
     </>

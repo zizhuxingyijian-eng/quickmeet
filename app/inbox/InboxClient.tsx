@@ -74,63 +74,69 @@ export function InboxClient() {
     setLoading(false);
   }
 
+  function formatTime(value: string) {
+    // start_time 来自数据库通常是 HH:MM:SS，这里裁掉秒数
+    const parts = value.split(":");
+    return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : value;
+  }
+
   async function updateStatus(id: string, status: "accepted" | "rejected") {
-  setMsg(null);
+    setMsg(null);
 
-  // 1. 更新数据库里的状态
-  const { error } = await supabase
-    .from("requests")
-    .update({ status })
-    .eq("id", id);
+    // 1. 更新数据库里的状态
+    const { error } = await supabase
+      .from("requests")
+      .update({ status })
+      .eq("id", id);
 
-  if (error) {
-    console.error("updateStatus error:", error);
-    setMsg(error.message || "Failed to update status.");
-    return;
-  }
-
-  // 2. 本地状态同步
-  setRequests((prev) =>
-    prev.map((r) => (r.id === id ? { ...r, status } : r))
-  );
-
-  // 3. 在当前状态里找到这条 request（A → B 那条）
-  const current = requests.find((r) => r.id === id);
-  if (!current) {
-    console.warn("No request found in state for id:", id, requests);
-    return;
-  }
-
-  console.log("[updateStatus] replying for request:", current);
-
-  // 4. 发邮件给 A（from_email 是 A 的邮箱）
-  try {
-    const res = await fetch("/api/notify-reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        toEmail: current.from_email, // ⭐ A 的邮箱（一定要有）
-        toName: current.from_name,
-        fromEmail: current.to_email, // B 的邮箱
-        fromName: current.to_name,
-        date: current.date,
-        startTime: current.start_time,
-        durationMinutes: current.duration_minutes,
-        place: current.place,
-        note: current.note,
-        status,
-      }),
-    });
-
-    console.log("[updateStatus] notify-reply status:", res.status);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      console.error("[updateStatus] notify-reply failed:", data);
+    if (error) {
+      console.error("updateStatus error:", error);
+      setMsg(error.message || "Failed to update status.");
+      return;
     }
-  } catch (err) {
-    console.error("[updateStatus] notify reply failed:", err);
+
+    // 2. 本地状态同步
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status } : r))
+    );
+
+    // 3. 在当前状态里找到这条 request（A → B 那条）
+    const current = requests.find((r) => r.id === id);
+    if (!current) {
+      console.warn("No request found in state for id:", id, requests);
+      return;
+    }
+
+    console.log("[updateStatus] replying for request:", current);
+
+    // 4. 发邮件给 A（from_email 是 A 的邮箱）
+    try {
+      const res = await fetch("/api/notify-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toEmail: current.from_email, // ⭐ A 的邮箱（一定要有）
+          toName: current.from_name,
+          fromEmail: current.to_email, // B 的邮箱
+          fromName: current.to_name,
+          date: current.date,
+          startTime: current.start_time,
+          durationMinutes: current.duration_minutes,
+          place: current.place,
+          note: current.note,
+          status,
+        }),
+      });
+
+      console.log("[updateStatus] notify-reply status:", res.status);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("[updateStatus] notify-reply failed:", data);
+      }
+    } catch (err) {
+      console.error("[updateStatus] notify reply failed:", err);
+    }
   }
-}
 
 
   
@@ -140,8 +146,15 @@ export function InboxClient() {
     return (
       <main className="main-shell">
         <div className="card">
-          <div className="card-title">Inbox</div>
-          <div className="card-subtitle">Checking your session…</div>
+          <div className="card-header">
+            <div className="seal" lang="ja">
+              信
+            </div>
+            <div>
+              <div className="card-title">Inbox</div>
+              <div className="card-subtitle">Checking your session…</div>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -152,9 +165,16 @@ export function InboxClient() {
     return (
       <main className="main-shell">
         <div className="card">
-          <div className="card-title">Inbox</div>
-          <div className="card-subtitle">
-            Please sign in with Google to view your inbox.
+          <div className="card-header">
+            <div className="seal" lang="ja">
+              信
+            </div>
+            <div>
+              <div className="card-title">Inbox</div>
+              <div className="card-subtitle">
+                Please sign in with Google to view your inbox.
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -165,33 +185,42 @@ export function InboxClient() {
   return (
     <main className="main-shell">
       <div className="card">
-        <div className="card-title">Inbox · {userEmail}</div>
-        <div className="card-subtitle">
-          All meet-up requests sent to your account.
+        <div className="card-header">
+          <div className="seal" lang="ja">
+            信
+          </div>
+          <div>
+            <div className="card-title">Inbox · {userEmail}</div>
+            <div className="card-subtitle">
+              All meet-up requests sent to your account.
+            </div>
+          </div>
         </div>
 
-        <div className="btn-row">
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => load(userEmail)}
-          >
-            Refresh
-          </button>
+        <div className="card-section">
+          <div className="btn-row">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => load(userEmail)}
+            >
+              Refresh
+            </button>
 
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => {
-              window.location.href = "/sent";
-            }}
-          >
-            View requests you sent
-          </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                window.location.href = "/sent";
+              }}
+            >
+              View requests you sent
+            </button>
+          </div>
+
+          {loading && <div className="feedback">Loading…</div>}
+          {msg && <div className="feedback">{msg}</div>}
         </div>
-
-        {loading && <div className="feedback">Loading…</div>}
-        {msg && <div className="feedback">{msg}</div>}
 
         <div className="list">
           {requests.map((r) => (
@@ -220,7 +249,7 @@ export function InboxClient() {
               </div>
 
               <div className="request-meta">
-                📅 {r.date} · {r.start_time} · {r.duration_minutes} min
+                📅 {r.date} · {formatTime(r.start_time)} · {r.duration_minutes} min
               </div>
               <div className="request-meta">📍 {r.place}</div>
               {r.note && <div className="request-note">📝 {r.note}</div>}

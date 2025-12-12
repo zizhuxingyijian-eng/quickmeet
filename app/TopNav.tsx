@@ -18,7 +18,8 @@ export function TopNav({ onUserChange }: Props) {
       <div className="top-nav-inner">
         {/* 左：logo */}
         <Link href="/" className="logo">
-          QuickMeet
+          <span className="logo-mark" aria-hidden="true" />
+          <span className="logo-word">LetterMeet</span>
         </Link>
 
         {/* 中：导航 */}
