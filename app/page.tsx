@@ -185,7 +185,7 @@ export default function Home() {
       <main className="main-shell">
         <div className="card">
           <div className="card-header">
-            <div className="seal">LM</div>
+            <div className="seal seal--brand" aria-hidden="true"></div>
             <div>
               <div className="card-title">LetterMeet · Send a request</div>
               <div className="card-subtitle">

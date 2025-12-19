@@ -82,9 +82,15 @@ a {
 .logo-mark {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: url("/letter-seal.svg") center/contain no-repeat;
+  border-radius: 0;
+  border: 0;
+  background-color: var(--paper-soft);
+  background-image: url("/icon.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-blend-mode: multiply;
+  box-shadow: none;
   flex-shrink: 0;
 }
 
@@ -180,6 +186,20 @@ a {
   background: var(--paper-soft);
   font-size: 14px;
   letter-spacing: 0.2em;
+}
+
+.seal--brand {
+  background-color: var(--paper-soft);
+  background-image: url("/icon.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-blend-mode: multiply;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  letter-spacing: 0;
+  font-size: 0;
 }
 
 .card-title {
