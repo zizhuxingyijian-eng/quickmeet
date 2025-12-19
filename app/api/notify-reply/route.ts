@@ -6,6 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
+    const requestUrl = new URL(request.url);
     const body = await request.json();
 
     console.log("[notify-reply] incoming body:", body);
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const baseUrl = (siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "")
+    const baseUrl = (siteUrl || process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin || "")
       .trim()
       .replace(/\/+$/, "");
     const sentUrl = `${baseUrl}/sent`;
